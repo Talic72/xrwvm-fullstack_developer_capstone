@@ -21,7 +21,7 @@ const Dealer = () => {
   let params = useParams();
   let id =params.id;
   let dealer_url = root_url+`djangoapp/dealer/${id}`;
-  let reviews_url = root_url+`djangoapp/reviews/dealer/${id}`;
+  let reviews_url = root_url+`djangoapp/reviews/${id}`;
   let post_review = root_url+`postreview/${id}`;
   
   const get_dealer = async ()=>{
@@ -31,26 +31,27 @@ const Dealer = () => {
     const retobj = await res.json();
     
     if(retobj.status === 200) {
-      let dealerobjs = Array.from(retobj.dealer)
-      setDealer(dealerobjs[0])
+      setDealer(retobj.dealer)
     }
   }
 
-  const get_reviews = async ()=>{
-    const res = await fetch(reviews_url, {
-      method: "GET"
-    });
+  const get_reviews = async () => {
+  try {
+    const res = await fetch(reviews_url);
     const retobj = await res.json();
-    
-    if(retobj.status === 200) {
-      if(retobj.reviews.length > 0){
-        setReviews(retobj.reviews)
-      } else {
+
+    console.log("Reviews response:", retobj);
+
+    if (retobj.status === 200) {
+      setReviews(retobj.reviews || []);
+      if (!retobj.reviews || retobj.reviews.length === 0) {
         setUnreviewed(true);
       }
     }
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
   }
-
+};
   const senti_icon = (sentiment)=>{
     let icon = sentiment === "positive"?positive_icon:sentiment==="negative"?negative_icon:neutral_icon;
     return icon;
@@ -74,9 +75,9 @@ return(
       <h1 style={{color:"grey"}}>{dealer.full_name}{postReview}</h1>
       <h4  style={{color:"grey"}}>{dealer['city']},{dealer['address']}, Zip - {dealer['zip']}, {dealer['state']} </h4>
       </div>
-      <div class="reviews_panel">
+      <div className="reviews_panel">
       {reviews.length === 0 && unreviewed === false ? (
-        <text>Loading Reviews....</text>
+        <p>Loading Reviews....</p>
       ):  unreviewed === true? <div>No reviews yet! </div> :
       reviews.map(review => (
         <div className='review_panel'>
